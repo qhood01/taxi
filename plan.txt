@@ -1,0 +1,31 @@
+Input: 2016 green taxi data with pickup and dropoff location.
+
+Output: D3 application that visualizes pickup/dropoff location by
+dividing City into hexagonal areas. The hexagonal areas will be
+color-coded based on the volumed of activity in that area in a given
+hour.
+
+Work in R:
+Aggregate taxi data into hexagonal bins by hour. Will create a data
+frame with the hour, center of hexagon (x,y), number of events
+(pickup/dropoff), and color associated with the number of pickups. One
+dataframe for pickups and one for dropoffs.
+
+Hour, X, Y, Number, Color
+
+Steps
+- Divide City into hexagonal areas using shapefile of the
+city. Example: http://strimas.com/spatial/hexagonal-grids/
+- Convert taxi coordinates into SpatialPointsDataFrame
+- Use over() function to return intersection of pickup/dropoff and
+hexagonal areas
+- For each hour get frequency of pickup/dropoffs by hexagonal
+area
+- Convert frequencies into colors
+
+Work in D3:
+Steps
+- Load map of NYC
+- Create function that draws hexagons if given center (x,y) and colors
+based on given color
+- Create slider that iterates through the hours of the day
