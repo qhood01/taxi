@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<svg width="1000" height="800"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+
+<script>
+
+  var svg = d3.select("svg"),
+      width = +svg.attr("width"),
+      height = +svg.attr("height");
+  
+  var rx = d3.randomUniform(-74.2, -74.1),
+      ry = d3.randomUniform(40.6, 40.7),
+      points = d3.range(30).map(function() { return [rx(), ry()]; });
+  
+  var hexbin = d3.hexbin()
+      .radius(20)
+      .extent([[0, 0], [width, height]]);
+  
+
+  var projection = d3.geoMercator()
+      .center([-73.94, 40.70])
+      .scale(70000)
+      .translate([(width) / 2, (height)/2]);
+  
+  var path = d3.geoPath()
+      .projection(projection);
+  
+  // d3.json("boros.GeoJSON", function(error, nyb) {
+  //     console.log(nyb);
+
+  //     svg.selectAll("path")
+  // 	  .data(nyb.features)
+  // 	  .enter().append("path")
+  // 	  .attr("class", "boro")
+  // 	  .style("fill", "steelblue")
+  // 	  .attr("d", path);
+
+  //     svg.append("g")
+  // 	  .attr("class", "hexagon")
+  // 	  .selectAll("path")
+  // 	  .data(points)
+  // 	  .enter().append("path")
+  // 	  .attr("d", function(d) { console.log(projection(d)); return "M" + projection(d)[0] + "," + projection(d)[1] + hexbin.hexagon(5); })
+  // 	  .attr("fill", "blue");
+
+  // });
+
+  var toggleColor = (function(){
+      var currentColor = "white";
+      
+      return function(){
+          currentColor = currentColor == "white" ? "black" : "white";
+          d3.select(this).style("stroke", currentColor);
+      }
+  })();
+
+  d3.json("hexGrid.GeoJSON", function(error, hex) {
+      svg.selectAll("path")
+   	  .data(hex.features)
+   	  .enter().append("path")
+   	  .attr("class", "hex")
+   	  .style("fill", function(d) { return d.properties.color; })
+   	  .attr("d", path)
+	  .on("hover",toggleColor);
+  });
+</script>
