@@ -57,13 +57,79 @@
       }
   })();
 
-  d3.json("hexGrid.GeoJSON", function(error, hex) {
-      svg.selectAll("path")
+  var colors = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d","#666666"]
+
+
+  d3.json("hexColors.GeoJSON", function(error, hex) {
+      var hexes = svg.selectAll("path")
    	  .data(hex.features)
    	  .enter().append("path")
    	  .attr("class", "hex")
-   	  .style("fill", function(d) { return d.properties.color; })
-   	  .attr("d", path)
-	  .on("hover",toggleColor);
+          .attr("d", path)
+	  .attr("fill","green")
+	  .transition().delay(2000)
+	  .on("start", function repeat() {
+              d3.active(this)
+		  .attr("fill", colors[0])
+		  .transition().duration(2000)
+	      	  .attr("fill", colors[1])
+		  .transition().duration(2000)
+	      	  .attr("fill", colors[2])
+		  .transition().duration(2000)
+	      	  .attr("fill", colors[3])
+		  .transition().duration(2000)
+	      	  .attr("fill", colors[4])
+		  .transition().duration(2000)
+	      	  .attr("fill", colors[5])
+		  .transition().duration(2000)
+	      	  .attr("fill", colors[6])
+		  .transition().duration(2000)
+	      	  .attr("fill", colors[7])
+		  .transition().duration(2000)
+		  .on("start", repeat);
+	  });
+
+
+
+      
+      // repeat();
+      
+      // function repeat() {
+      // 	  hexes.style("fill","purple")
+      // 	      .transition().duration(2000)
+      // 	      .style("fill","green")
+      // 	      .transition().duration(2000)
+      // 	      .style("fill","pink")
+      // 	      .transition().duration(2000)
+      // 	      .style("fill","orange")
+      // 	      .on("end",repeat);
+      // }
   });
+
+
+
+
+//   function circleTransition() { 
+
+//     var timeCircle = svg.append("circle")
+//         .attr("fill", "steelblue")
+//         .attr("r", 20);
+//     repeat();
+    
+//     function repeat() {
+//       timeCircle
+//         .attr('cx', 40)      // position the circle at 40 on the x axis
+//         .attr('cy', 250)     // position the circle at 250 on the y axis
+//         .transition()        // apply a transition
+//         .duration(2000)      // apply it over 2000 milliseconds
+//         .attr('cx', 920)     // move the circle to 920 on the x axis
+//         .transition()        // apply a transition
+//         .duration(2000)      // apply it over 2000 milliseconds
+//         .attr('cx', 40)      // return the circle to 40 on the x axis
+//         .on("end", repeat);  // when the transition finishes start again
+//     };
+
+// };
+
+// circleTransition();
 </script>
