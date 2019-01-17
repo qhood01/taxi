@@ -60,7 +60,7 @@
   var colors = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d","#666666"]
 
 
-  d3.json("hexColors.GeoJSON", function(error, hex) {
+  d3.json("hexGrid.GeoJSON", function(error, hex) {
       var hexes = svg.selectAll("path")
    	  .data(hex.features)
    	  .enter().append("path")
