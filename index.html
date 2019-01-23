@@ -1,135 +1,207 @@
 <!DOCTYPE html>
 
-<svg width="1000" height="800"></svg>
+<svg width="1600" height="800"></svg>
+<div id="tiles"></div>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
 <script src="https://d3js.org/topojson.v2.min.js"></script>
-
+<script src="//d3js.org/d3-tile.v0.0.min.js"></script>
 <script>
 
   var svg = d3.select("svg"),
       width = +svg.attr("width"),
       height = +svg.attr("height");
-  
-  var rx = d3.randomUniform(-74.2, -74.1),
-      ry = d3.randomUniform(40.6, 40.7),
-      points = d3.range(30).map(function() { return [rx(), ry()]; });
-  
-  var hexbin = d3.hexbin()
-      .radius(20)
-      .extent([[0, 0], [width, height]]);
-  
 
   var projection = d3.geoMercator()
-      .center([-73.94, 40.70])
-      .scale(70000)
-      .translate([(width) / 2, (height)/2]);
-  
+      .center([-73.95, 40.7])
+      .scale(80000)
+      .translate([(width) / 3, (height)/2]);
+
   var path = d3.geoPath()
       .projection(projection);
-  
-  // d3.json("boros.GeoJSON", function(error, nyb) {
-  //     console.log(nyb);
 
-  //     svg.selectAll("path")
-  // 	  .data(nyb.features)
-  // 	  .enter().append("path")
-  // 	  .attr("class", "boro")
-  // 	  .style("fill", "steelblue")
-  // 	  .attr("d", path);
+  function clickHex(d) {
+      proj = path.centroid(d);
 
-  //     svg.append("g")
-  // 	  .attr("class", "hexagon")
-  // 	  .selectAll("path")
-  // 	  .data(points)
-  // 	  .enter().append("path")
-  // 	  .attr("d", function(d) { console.log(projection(d)); return "M" + projection(d)[0] + "," + projection(d)[1] + hexbin.hexagon(5); })
-  // 	  .attr("fill", "blue");
-
-  // });
-
-  var toggleColor = (function(){
-      var currentColor = "white";
+      xc = projection.invert(proj)[0]
+      yc = projection.invert(proj)[1]
       
-      return function(){
-          currentColor = currentColor == "white" ? "black" : "white";
-          d3.select(this).style("stroke", currentColor);
-      }
-  })();
+      var projectionZoom = d3.geoMercator()
+	  .center([xc,yc])
+	  .scale(80000)
+	  .translate([1200,(height)/2]);
 
-  var colors = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d","#666666"]
+      var pathZoom = d3.geoPath()
+	  .projection(projectionZoom);
 
+      var node = d3.select(this).node();
+      xOff = 1200-proj[0];
+      yOff = 400-proj[1];
+      zoom = 40;
+      x = 1200*(zoom-1);
+      y = 400*(zoom-1);
+
+      d3.select(node.parentNode.appendChild(node.cloneNode(true)))
+			.attr("fill","white")
+			.attr("stroke","black")
+			.transition()
+			.duration(5000)
+			.attr("transform", "translate(" +
+			      xOff + "," + yOff + ")").remove();
+
+      svg.select(".zoom").remove();
+
+      var defs = svg.append("path")
+	  .datum(d)
+	  .attr("class", "zoom")
+	  .attr("d", pathZoom)
+	  .attr("fill", "no-fill")
+	  .attr('fill-opacity', 0)
+	  .transition()
+	  .delay(5000)
+	  .attr("stroke", "black")
+	  .transition()
+	  .duration(5000)
+	  .attr("transform", "translate(" + -x + "," + -y + ")scale("
+	  	+ zoom + ")");
+
+      defs.append("clipPath")
+      	  .attr("id", "hex-clip");
+
+      var pi = Math.PI,
+	  tau = 2 * pi;
+
+      var projectionNew = d3.geoMercator()
+	  .scale(1 / tau)
+	  .translate([0, 0]);
+      var pathNew = d3.geoPath()
+	  .projection(projectionNew);
+      // Compute the projected bounding box given a geographic bounding box (here, California).
+      // This assumes parallels are horizontal and meridians are vertical…
+      // but you could use path.bounds to handle arbitrary shapes.
+      // Note that the y-dimension is flipped relative to latitude!
+      var min0=0;
+      var max0=-100;
+      var min1=100;
+      var max1=0;
+      console.log(d.geometry.coordinates[0]);
+      d.geometry.coordinates[0][0].forEach(function(d) {
+	  if (d[0] < min0) {	      
+	      min0 = d[0]
+	  }
+	  if (d[1] < min1) {
+	      min1 = d[1]
+	  }
+	  if (d[0] > max0) {
+	      max0 = d[0]
+	  }
+	  if (d[1] > max1) {
+	      max1 = d[1]
+	  }
+      });
+
+      var bounds = [[min0,min1],[max0,max1]]
+	  p0 = projectionNew([bounds[0][0], bounds[1][1]]),
+	  p1 = projectionNew([bounds[1][0], bounds[0][1]]);
+
+      // Convert this to a scale k and translate tx, ty for the projection.
+      // For crisp image tiles, clamp to the nearest power of two.
+      var k = floor(0.95 / Math.max((p1[0] - p0[0]) / width, (p1[1] - p0[1]) / height)),
+	  tx = (width - k * (p1[0] + p0[0])) / 2,
+	  ty = (height - k * (p1[1] + p0[1])) / 2;
+
+      projectionNew
+	  .scale(k / tau)
+	  .translate([tx, ty]);
+
+      // Lastly convert this to the corresponding tile.scale and tile.translate;
+      // see http://bl.ocks.org/mbostock/4150951 for a related example.
+      var tiles = d3.tile()
+	  .extent([[1100, 200],[1300,600]])
+	  .scale(k)
+	  .translate([tx, ty])
+      ();
+
+      
+      d3.select("#tiles").selectAll("img").remove();
+      
+      d3.select("#tiles")
+      	  .attr("clip-path", "url(#hex-clip)")
+      	  .selectAll("img")
+      	  .data(tiles).enter()
+      	  .append("img")
+      	  .style("position", "absolute")
+      	  .attr("src", function(d, i) { return "http://" + "abc"[d[1] % 3] + ".tile.openstreetmap.org/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
+      	  .style("left", function(d) { return (d[0] + tiles.translate[0]) * tiles.scale + "px"; })
+      	  .style("top", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale + "px"; })
+      	  .attr("width", tiles.scale)
+      	  .attr("height", tiles.scale);
+  }
+
+  function floor(k) {
+      return Math.pow(2, Math.floor(Math.log(k) / Math.LN2));
+  }
 
   d3.json("hexColors.GeoJSON", function(error, hex) {
-      var hexes = svg.selectAll("path")
-   	  .data(hex.features)
-   	  .enter().append("path")
-   	  .attr("class", "hex")
-          .attr("d", path)
-	  .attr("fill","green")
-	  .transition().delay(2000)
-	  .on("start", function repeat() {
+       var hexes = svg.selectAll("path")
+    	  .data(hex.features)
+    	  .enter().append("path")
+   	  .on("click", clickHex)
+    	  .attr("class", "hex")
+           .attr("d", path)
+   	  .attr("fill", function(d) { return d.properties.col1; })
+   	  .transition()
+   	  .on("start", function repeat() {
               d3.active(this)
-		  .attr("fill", colors[0])
-		  .transition().duration(2000)
-	      	  .attr("fill", colors[1])
-		  .transition().duration(2000)
-	      	  .attr("fill", colors[2])
-		  .transition().duration(2000)
-	      	  .attr("fill", colors[3])
-		  .transition().duration(2000)
-	      	  .attr("fill", colors[4])
-		  .transition().duration(2000)
-	      	  .attr("fill", colors[5])
-		  .transition().duration(2000)
-	      	  .attr("fill", colors[6])
-		  .transition().duration(2000)
-	      	  .attr("fill", colors[7])
-		  .transition().duration(2000)
-		  .on("start", repeat);
-	  });
-
-
-
-      
-      // repeat();
-      
-      // function repeat() {
-      // 	  hexes.style("fill","purple")
-      // 	      .transition().duration(2000)
-      // 	      .style("fill","green")
-      // 	      .transition().duration(2000)
-      // 	      .style("fill","pink")
-      // 	      .transition().duration(2000)
-      // 	      .style("fill","orange")
-      // 	      .on("end",repeat);
-      // }
+		  .transition().duration(1000)
+   		  .attr("fill", function(d) { return d.properties.col1; })
+   		  .transition().duration(1000)
+   		  .attr("fill", function(d) { return d.properties.col2; })
+   		  .transition().duration(1000)
+   		  .attr("fill", function(d) { return d.properties.col3; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col4; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col5; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col6; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col7; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col8; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col9; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col10; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col11; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col12; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col13; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col14; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col15; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col16; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col17; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col18; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col19; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col20; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col21; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col22; })
+   		  .transition().duration(1000)
+   	      	  .attr("fill", function(d) { return d.properties.col23; })
+   		  .transition().duration(1000)
+   		  .attr("fill", function(d) { return d.properties.col24; })
+   		  .on("start", repeat);
+   	  });
   });
-
-
-
-
-//   function circleTransition() { 
-
-//     var timeCircle = svg.append("circle")
-//         .attr("fill", "steelblue")
-//         .attr("r", 20);
-//     repeat();
-    
-//     function repeat() {
-//       timeCircle
-//         .attr('cx', 40)      // position the circle at 40 on the x axis
-//         .attr('cy', 250)     // position the circle at 250 on the y axis
-//         .transition()        // apply a transition
-//         .duration(2000)      // apply it over 2000 milliseconds
-//         .attr('cx', 920)     // move the circle to 920 on the x axis
-//         .transition()        // apply a transition
-//         .duration(2000)      // apply it over 2000 milliseconds
-//         .attr('cx', 40)      // return the circle to 40 on the x axis
-//         .on("end", repeat);  // when the transition finishes start again
-//     };
-
-// };
-
-// circleTransition();
 </script>
