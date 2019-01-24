@@ -87,7 +87,7 @@
       var max0=-100;
       var min1=100;
       var max1=0;
-      console.log(d.geometry.coordinates[0]);
+
       d.geometry.coordinates[0][0].forEach(function(d) {
 	  if (d[0] < min0) {	      
 	      min0 = d[0]
@@ -102,41 +102,41 @@
 	      max1 = d[1]
 	  }
       });
-
-      var bounds = [[min0,max1],[max0,min1]]
-	  p0 = projectionNew([bounds[0][0], bounds[1][1]]),
-	  p1 = projectionNew([bounds[1][0], bounds[0][1]]);
-
-
-      console.log(projectionZoom([bounds[0][0], bounds[1][1]]));
-      console.log(projectionZoom([bounds[1][0], bounds[0][1]]));
       
-      var pz1 = projectionZoom([min0,max1]),
-	  pz2 = projectionZoom([max0,min1]);
-      
+      var bounds = [[min0,min1],[max0,max1]]
+      p0 = projectionNew([bounds[0][0], bounds[1][1]]),
+      p1 = projectionNew([bounds[1][0], bounds[0][1]]);
+
       // Convert this to a scale k and translate tx, ty for the projection.
       // For crisp image tiles, clamp to the nearest power of two.
+      
+      
       var k = floor(0.95 / Math.max((p1[0] - p0[0]) / width, (p1[1] - p0[1]) / height)),
 	  tx = (width - k * (p1[0] + p0[0])) / 2,
 	  ty = (height - k * (p1[1] + p0[1])) / 2;
 
+      console.log(tx);
+      console.log(ty);
+      
       projectionNew
-	  .scale(k / tau)
-	  .translate([tx, ty]);
+      	  .scale(k / tau)
+      	  .translate([tx, ty]);
 
       // Lastly convert this to the corresponding tile.scale and tile.translate;
       // see http://bl.ocks.org/mbostock/4150951 for a related example.
       
       var tiles = d3.tile()
-	  .extent([[900, 100],[1500, 700]])
+	  .size([width, height])
 	  .scale(k)
 	  .translate([tx, ty])
       ();
 
-      
-      d3.selectAll("image").remove();
-      
-      svg.selectAll("image")
+      svg.select(".tile").remove();
+
+      svg.append("g")
+          .attr("class", "tile")
+	  //.attr("clip-path", "url(#hex-clip)")
+	  .selectAll("image")
       	  .data(tiles).enter()
       	  .append("image")
       	  .style("position", "absolute")
@@ -145,7 +145,8 @@
 	  .attr("y", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale; })
 	  .attr("width", tiles.scale)
 	  .attr("height", tiles.scale)
-	  .attr("clip-path", "url(#hex-clip)");
+	  //.attr("transform", "translate("+(1200-(width/2))+","+0+")");
+
   }
 
   function floor(k) {
