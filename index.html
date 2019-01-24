@@ -36,12 +36,12 @@
       var pathZoom = d3.geoPath()
 	  .projection(projectionZoom);
 
-      var node = d3.select(this).node();
-      xOff = 1200-proj[0];
-      yOff = 400-proj[1];
-      zoom = 40;
-      x = 1200*(zoom-1);
-      y = 400*(zoom-1);
+      var node = d3.select(this).node(),
+	  xOff = 1200-proj[0],
+	  yOff = 400-proj[1],
+	  zoom = 40,
+	  x = 1200*(zoom-1),
+	  y = 400*(zoom-1);
 
       d3.select(node.parentNode.appendChild(node.cloneNode(true)))
 			.attr("fill","white")
@@ -51,42 +51,20 @@
 			.attr("transform", "translate(" +
 			      xOff + "," + yOff + ")").remove();
 
-      svg.select(".zoom").remove();
-
-      var defs = svg.append('defs')
-      
-      defs.append("clipPath")
-      	  .attr("id", "hex-clip")
-	  .append("path")
-	  .datum(d)
-	  .attr("class", "zoom")
-	  .attr("d", pathZoom)
-	  .attr("fill", "no-fill")
-	  .attr('fill-opacity', 0)
-	  .transition()
-	  .delay(5000)
-	  .attr("stroke", "black")
-	  .transition()
-	  .duration(5000)
-	  .attr("transform", "translate(" + -x + "," + -y + ")scale("
-	  	+ zoom + ")");
-
       var pi = Math.PI,
 	  tau = 2 * pi;
 
       var projectionNew = d3.geoMercator()
-	  .scale(1 / tau)
+	  .scale(1/tau)
 	  .translate([0, 0]);
+
       var pathNew = d3.geoPath()
 	  .projection(projectionNew);
-      // Compute the projected bounding box given a geographic bounding box (here, California).
-      // This assumes parallels are horizontal and meridians are vertical…
-      // but you could use path.bounds to handle arbitrary shapes.
-      // Note that the y-dimension is flipped relative to latitude!
-      var min0=0;
-      var max0=-100;
-      var min1=100;
-      var max1=0;
+           
+      var min0 = 0,
+	  max0 = -100,
+	  min1 = 100,
+	  max1 = 0;
 
       d.geometry.coordinates[0][0].forEach(function(d) {
 	  if (d[0] < min0) {	      
@@ -105,25 +83,42 @@
       
       var bounds = [[min0,min1],[max0,max1]]
       p0 = projectionNew([bounds[0][0], bounds[1][1]]),
-      p1 = projectionNew([bounds[1][0], bounds[0][1]]);
-
-      // Convert this to a scale k and translate tx, ty for the projection.
-      // For crisp image tiles, clamp to the nearest power of two.
-      
+      p1 = projectionNew([bounds[1][0], bounds[0][1]]);      
       
       var k = floor(0.95 / Math.max((p1[0] - p0[0]) / width, (p1[1] - p0[1]) / height)),
 	  tx = (width - k * (p1[0] + p0[0])) / 2,
 	  ty = (height - k * (p1[1] + p0[1])) / 2;
-
-      console.log(tx);
-      console.log(ty);
       
       projectionNew
       	  .scale(k / tau)
       	  .translate([tx, ty]);
 
-      // Lastly convert this to the corresponding tile.scale and tile.translate;
-      // see http://bl.ocks.org/mbostock/4150951 for a related example.
+      var w = projectionNew([max0,max1])[0]-projectionNew([min0,max1])[0],
+	  h = projectionNew([min0,min1])[0]-projectionNew([min0,max1])[1];
+
+      var defs = svg.append('defs')
+
+      svg.select(".zoom").remove();
+
+      console.log(pathNew);
+      
+      defs.append("path")
+	  .attr("id","frame")
+      	  .datum(d)
+      	  .attr("d", pathNew)
+//          .attr("class", "zoom")
+      	  .attr("fill", "none")
+      	  // .transition()
+      	  // .delay(5000)
+      	  // .attr("stroke", "black")
+      	  // .transition()
+      	  // .duration(5000)
+      	  .attr("transform", "translate(" + (1200-(width/2)) + "," + 0 + ")scale(.05)");
+
+      defs.append("clipPath")
+      	  .attr("id", "hex-clip")
+	  .append("use")
+	  .attr("xlink:href", "#frame");
       
       var tiles = d3.tile()
 	  .size([width, height])
@@ -135,17 +130,21 @@
 
       svg.append("g")
           .attr("class", "tile")
-	  //.attr("clip-path", "url(#hex-clip)")
+	  .attr("clip-path", "url(#hex-clip)")
 	  .selectAll("image")
       	  .data(tiles).enter()
       	  .append("image")
-      	  .style("position", "absolute")
+      	  //.style("position", "absolute")
 	  .attr("xlink:href", function(d) { return "http://" + "abc"[d[1] % 3] + ".tile.openstreetmap.org/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
 	  .attr("x", function(d) { return (d[0] + tiles.translate[0]) * tiles.scale; })
 	  .attr("y", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale; })
 	  .attr("width", tiles.scale)
 	  .attr("height", tiles.scale)
-	  //.attr("transform", "translate("+(1200-(width/2))+","+0+")");
+	  .attr("transform", "translate("+(1200-(width/2))+","+0+")");
+
+      svg.append("use")
+	  .attr("xlink:href", "#frame")
+	  .attr("class", "stroke");
 
   }
 
