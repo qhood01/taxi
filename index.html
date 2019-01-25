@@ -23,8 +23,11 @@
       .projection(projection);
 
   function clickHex(d) {
-      proj = path.centroid(d);
+      proj = path.centroid(d)//[d3.select(this).node().getBBox().x,d3.select(this).node().getBBox().y]//path.centroid(d);
 
+      console.log(proj)
+      console.log(d3.select(this).node().getBBox().x)
+      
       xc = projection.invert(proj)[0]
       yc = projection.invert(proj)[1]
       
@@ -37,8 +40,8 @@
 	  .projection(projectionZoom);
 
       var node = d3.select(this).node(),
-	  xOff = 1200-proj[0],
-	  yOff = 400-proj[1],
+	  xOff = 1200-proj[0]-d3.select(this).node().getBBox().width,
+	  yOff = 400-d3.select(this).node().getBBox().y-d3.select(this).node().getBBox().height,
 	  zoom = 40,
 	  x = 1200*(zoom-1),
 	  y = 400*(zoom-1);
@@ -100,21 +103,20 @@
 
       svg.select(".zoom").remove()
       
-      console.log(xOff)
-      console.log(yOff)
-
       defs.append("path")
 	  .attr("id","frame")
       	  .datum(d)
       	  .attr("d", pathNew)
           .attr("class", "zoom")
       	  .attr("fill", "none")
-	  .attr("transform",
-	  	"translate(1200,"+(height/2)+")scale(0.05)translate(-1200,"+(-height/2)+")")
-          .transition()
-	  .delay(5000)
-	  .duration(5000)
-          .attr("transform", "translate(" + (1200-(width/2)) + "," + 0+ ")")
+	  .attr("stroke", "black")
+	  .attr("transform","translate("+proj[0]+","+proj[1]+")scale(0.05)translate("+(-proj[0])+","+(-proj[1])+")")
+	  // .attr("transform",
+	  // 	"translate(1200,"+(height/2)+")scale(0.05)translate(-1200,"+(-height/2)+")")
+          // .transition()
+	  // .delay(5000)
+	  // .duration(5000)
+          // .attr("transform", "translate(" + (1200-(width/2)) + "," + 0+ ")")
 
       defs.append("clipPath")
       	  .attr("id", "hex-clip")
