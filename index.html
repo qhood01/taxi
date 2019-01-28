@@ -1,226 +1,305 @@
 <!DOCTYPE html>
-<body>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
-<script src="https://d3js.org/topojson.v2.min.js"></script>
-<script src="//d3js.org/d3-tile.v0.0.min.js"></script>
-<script>
-
-  const width = 1600;
-  const height = 800;
-
-
-  const svg = d3.select('body').append('svg')
-	.attr('width', width)
-	.attr('height', height);
-  
-  var projection = d3.geoMercator()
-      .center([-73.95, 40.7])
-      .scale(80000)
-      .translate([(width) / 3, (height)/2]);
-
-  var path = d3.geoPath()
-      .projection(projection);
-
-  function clickHex(d) {
-      proj = path.centroid(d)//[d3.select(this).node().getBBox().x,d3.select(this).node().getBBox().y]//path.centroid(d);
-
-      console.log(proj)
-      console.log(d3.select(this).node().getBBox().x)
+<meta charset="utf-8">
+<html>
+  <head>
+    <style>
+      rect.bordered {
+          stroke: #E6E6E6;
+          stroke-width:2px;   
+      }
       
-      xc = projection.invert(proj)[0]
-      yc = projection.invert(proj)[1]
+      text.mono {
+          font-size: 9pt;
+          font-family: Consolas, courier;
+          fill: #aaa;
+      }
       
-      var projectionZoom = d3.geoMercator()
-	  .center([xc,yc])
+      text.axis-workweek {
+          fill: #000;
+      }
+      
+      text.axis-worktime {
+          fill: #000;
+      }
+    </style>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+    <script src="//d3js.org/d3-tile.v0.0.min.js"></script>
+  </head>
+  <body>
+    <div id="chart"></div>
+  <body>
+    <script>
+
+      var width = 1600;
+      var height = 800;
+
+      var svg = d3.select('body').append('svg')
+	  .attr('width', width)
+	  .attr('height', height);
+
+      // Map Setup
+      var hexCenterX = 3*width/4,
+	  hexCenterY = height/3;
+	  
+      var projection = d3.geoMercator()
+	  .center([-73.95, 40.7])
 	  .scale(80000)
-	  .translate([1200,(height)/2]);
+	  .translate([(width) / 3, (height)/2]);
 
-      var pathZoom = d3.geoPath()
-	  .projection(projectionZoom);
-
-      var node = d3.select(this).node(),
-	  xOff = 1200-proj[0]-d3.select(this).node().getBBox().width,
-	  yOff = 400-d3.select(this).node().getBBox().y-d3.select(this).node().getBBox().height,
-	  zoom = 40,
-	  x = 1200*(zoom-1),
-	  y = 400*(zoom-1);
-
-      d3.select(node.parentNode.appendChild(node.cloneNode(true)))
-			.attr("fill","white")
-			.attr("stroke","black")
-			.transition()
-			.duration(5000)
-			.attr("transform", "translate(" +
-			      xOff + "," + yOff + ")").remove();
-
+      var path = d3.geoPath()
+	  .projection(projection);
+      
       var pi = Math.PI,
 	  tau = 2 * pi;
 
-      var projectionNew = d3.geoMercator()
-	  .scale(1/tau)
-	  .translate([0, 0]);
+      // Heatmap Setup
+      var gridSize = Math.floor((width/3) / 24),
+	  gridOffx = hexCenterX-(width/6),
+	  gridOffy = 3*height/4,
+	  legendElementWidth = gridSize*2,
+	  buckets = 9,
+	  colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"],
+	  days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+	  times = ["1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12a", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12p"];      
 
-      var pathNew = d3.geoPath()
-	  .projection(projectionNew);
-           
-      var min0 = 0,
-	  max0 = -100,
-	  min1 = 100,
-	  max1 = 0;
+      function clickHex(d) {
+	  console.log(d.properties)
+	  var dayLabels = svg.selectAll(".dayLabel")
+	      .data(days)
+	      .enter().append("text")
+	      .text(function (d) { return d; })
+	      .attr("x", (gridOffx))
+	      .attr("y", function (d, i) { return ((i * gridSize)+(gridOffy)); })
+	      .style("text-anchor", "end")
+	      .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
+	      .attr("class", function (d, i) { return ((i >= 0 && i <= 4) ? "dayLabel mono axis axis-workweek" : "dayLabel mono axis"); });
 
-      d.geometry.coordinates[0][0].forEach(function(d) {
-	  if (d[0] < min0) {	      
-	      min0 = d[0]
-	  }
-	  if (d[1] < min1) {
-	      min1 = d[1]
-	  }
-	  if (d[0] > max0) {
-	      max0 = d[0]
-	  }
-	  if (d[1] > max1) {
-	      max1 = d[1]
-	  }
+	  var timeLabels = svg.selectAll(".timeLabel")
+	      .data(times)
+	      .enter().append("text")
+	      .text(function(d) { return d; })
+	      .attr("x", function(d, i) { return ((i * gridSize)+(gridOffx)); })
+	      .attr("y", (gridOffy))
+	      .style("text-anchor", "middle")
+	      .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+	      .attr("class", function(d, i) { return ((i >= 7 && i <= 16) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
+
+	  proj = path.centroid(d);
+
+	  var node = d3.select(this).node();
+
+	  d3.select(".click").remove()
+	  
+	  d3.select(node.parentNode.appendChild(node.cloneNode(true)))
+	      .attr("fill","white")
+	      .attr("stroke","black")
+	      .attr("class","click");
+
+	  var projectionNew = d3.geoMercator()
+	      .scale(1/tau)
+	      .translate([0, 0]);
+	  
+	  var pathNew = d3.geoPath()
+	      .projection(projectionNew);
+          
+	  var min0 = 0,
+	      max0 = -100,
+	      min1 = 100,
+	      max1 = 0;
+
+	  d.geometry.coordinates[0][0].forEach(function(d) {
+	      if (d[0] < min0) {	      
+		  min0 = d[0]
+	      }
+	      if (d[1] < min1) {
+		  min1 = d[1]
+	      }
+	      if (d[0] > max0) {
+		  max0 = d[0]
+	      }
+	      if (d[1] > max1) {
+		  max1 = d[1]
+	      }
+	  });
+	  
+	  var bounds = [[min0,min1],[max0,max1]],
+	      p0 = projectionNew([bounds[0][0], bounds[1][1]]),
+	      p1 = projectionNew([bounds[1][0], bounds[0][1]]);      
+
+	  var k = floor(0.95 / Math.max((p1[0] - p0[0]) / width, (p1[1] - p0[1]) / height)),
+	      tx = (width - k * (p1[0] + p0[0])) / 2,
+	      ty = (height - k * (p1[1] + p0[1])) / 2;
+	  
+	  projectionNew
+      	      .scale(k / tau)
+      	      .translate([tx, ty]);
+
+	  var w = projectionNew([max0,max1])[0]-projectionNew([min0,max1])[0],
+	      h = projectionNew([min0,min1])[0]-projectionNew([min0,max1])[1];
+
+	  var defs = svg.append('defs')
+
+	  svg.select(".zoom").remove()
+
+	  defs.append("path")
+	      .attr("id","frame")
+      	      .datum(d)
+      	      .attr("d", pathNew)
+              .attr("class", "zoom")
+      	      .attr("fill", "white")
+	      .attr("stroke", "black")
+	      .attr("stroke-opacity",1)
+	      .attr("fill-opacity",1)
+	      .attr("transform","translate("+(proj[0]+(.03*(proj[0]-800)))+","+(proj[1]+(.03*(proj[1]-400)))+")scale(0.03)translate("+(-proj[0])+","+(-proj[1])+")")
+              .transition()
+	      .duration(7000)
+	      .attr("fill-opacity",0)
+              .attr("transform", "translate(" + (1200-(width/2)) + "," + (hexCenterY-height/2)+ ")")
+
+	  defs.append("clipPath")
+      	      .attr("id", "hex-clip")
+	      .append("use")
+	      .attr("xlink:href", "#frame");
+	  
+	  var tiles = d3.tile()
+	      .size([width, height])
+	      .scale(k)
+	      .translate([tx, ty])
+	  ();
+
+	  svg.select(".tile").remove();
+
+	  svg.append("g")
+              .attr("class", "tile")
+	      .attr("clip-path", "url(#hex-clip)")
+	      .selectAll("image")
+      	      .data(tiles).enter()
+      	      .append("image")
+	      .attr("xlink:href", function(d) { return "http://" + "abc"[d[1] % 3] + ".tile.openstreetmap.org/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
+	      .attr("x", function(d) { return (d[0] + tiles.translate[0]) * tiles.scale; })
+	      .attr("y", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale; })
+	      .attr("width", tiles.scale)
+	      .attr("height", tiles.scale)
+	      .attr("transform", "translate("+(1200-(width/2))+","+(hexCenterY-(height/2))+")");
+	  
+	  svg.append("use")
+	      .attr("xlink:href", "#frame")
+	      .attr("class", "stroke");
+
+      }
+
+      function floor(k) {
+	  return Math.pow(2, Math.floor(Math.log(k) / Math.LN2));
+      }
+
+      function heatmap(data) {
+	  var cards = svg.selectAll(".hour")
+              .data(data, function(d) {return d.day+':'+d.hour;});
+
+	  cards.append("title");
+
+	  cards.enter().append("rect")
+	      .attr("x", function(d) { return (((d.hour - 1) * gridSize)+gridOffx); })
+	      .attr("y", function(d) { return (((d.day - 1) * gridSize)+gridOffy); })
+              .attr("rx", 4)
+              .attr("ry", 4)
+              .attr("class", "hour bordered")
+              .attr("width", gridSize)
+              .attr("height", gridSize)
+              .style("fill", colors[0]);
+
+	  cards.transition().duration(1000)
+              .style("fill", function(d) { return colorScale(d.value); });
+
+	  cards.select("title").text(function(d) { return d.value; });
+	  
+	  cards.exit().remove();
+
+	  var legend = svg.selectAll(".legend")
+              .data([0].concat(colorScale.quantiles()), function(d) { return d; });
+
+	  legend.enter().append("g")
+              .attr("class", "legend");
+
+	  legend.append("rect")
+	      .attr("x", function(d, i) { return ((legendElementWidth * i)+gridOffx); })
+              .attr("y", height)
+              .attr("width", legendElementWidth)
+              .attr("height", gridSize / 2)
+              .style("fill", function(d, i) { return colors[i]; });
+
+	  legend.append("text")
+              .attr("class", "mono")
+              .text(function(d) { return "≥ " + Math.round(d); })
+	      .attr("x", function(d, i) { return ((legendElementWidth * i)+gridOffx); })
+              .attr("y", height + gridSize);
+
+	  legend.exit().remove();
+      }
+
+      d3.json("hexColors.GeoJSON", function(error, hex) {//hexColors.GeoJSON
+	  var hexes = svg.selectAll("path")
+    	      .data(hex.features)
+    	      .enter().append("path")
+   	      .on("click", clickHex)
+    	      .attr("class", "hex")
+              .attr("d", path)
+   	      .attr("fill", function(d) { return d.properties.col1; })//col1
+   	      .transition()
+   	      .on("start", function repeat() {
+		  d3.active(this)
+   	  	      .attr("fill", function(d) { return d.properties.col1; })
+   	  	      .transition().duration(1000)
+   	  	      .attr("fill", function(d) { return d.properties.col2; })
+   	  	      .transition().duration(1000)
+   	  	      .attr("fill", function(d) { return d.properties.col3; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col4; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col5; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col6; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col7; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col8; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col9; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col10; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col11; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col12; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col13; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col14; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col15; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col16; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col17; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col18; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col19; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col20; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col21; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col22; })
+   	  	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col23; })
+   	  	      .transition().duration(1000)
+   	  	      .attr("fill", function(d) { return d.properties.col24; })
+   	  	      .on("start", repeat);
+   	      });
       });
-      
-      var bounds = [[min0,min1],[max0,max1]]
-      p0 = projectionNew([bounds[0][0], bounds[1][1]]),
-      p1 = projectionNew([bounds[1][0], bounds[0][1]]);      
-      
-      var k = floor(0.95 / Math.max((p1[0] - p0[0]) / width, (p1[1] - p0[1]) / height)),
-	  tx = (width - k * (p1[0] + p0[0])) / 2,
-	  ty = (height - k * (p1[1] + p0[1])) / 2;
-      
-      projectionNew
-      	  .scale(k / tau)
-      	  .translate([tx, ty]);
-
-      var w = projectionNew([max0,max1])[0]-projectionNew([min0,max1])[0],
-	  h = projectionNew([min0,min1])[0]-projectionNew([min0,max1])[1];
-
-      var defs = svg.append('defs')
-
-      svg.select(".zoom").remove()
-      
-      defs.append("path")
-	  .attr("id","frame")
-      	  .datum(d)
-      	  .attr("d", pathNew)
-          .attr("class", "zoom")
-      	  .attr("fill", "none")
-	  .attr("stroke", "black")
-	  .attr("transform","translate("+proj[0]+","+proj[1]+")scale(0.05)translate("+(-proj[0])+","+(-proj[1])+")")
-	  // .attr("transform",
-	  // 	"translate(1200,"+(height/2)+")scale(0.05)translate(-1200,"+(-height/2)+")")
-          // .transition()
-	  // .delay(5000)
-	  // .duration(5000)
-          // .attr("transform", "translate(" + (1200-(width/2)) + "," + 0+ ")")
-
-      defs.append("clipPath")
-      	  .attr("id", "hex-clip")
-	  .append("use")
-	  .attr("xlink:href", "#frame");
-      
-      var tiles = d3.tile()
-	  .size([width, height])
-	  .scale(k)
-	  .translate([tx, ty])
-      ();
-
-      svg.select(".tile").remove();
-
-      svg.append("g")
-          .attr("class", "tile")
-	  .attr("clip-path", "url(#hex-clip)")
-	  .selectAll("image")
-      	  .data(tiles).enter()
-      	  .append("image")
-      	  //.style("position", "absolute")
-	  .attr("xlink:href", function(d) { return "http://" + "abc"[d[1] % 3] + ".tile.openstreetmap.org/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
-	  .attr("x", function(d) { return (d[0] + tiles.translate[0]) * tiles.scale; })
-	  .attr("y", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale; })
-	  .attr("width", tiles.scale)
-	  .attr("height", tiles.scale)
-	  .attr("transform", "translate("+(1200-(width/2))+","+0+")")
-	  .attr("opacity",0)
-	  .transition()
-	  .delay(4000)
-	  .duration(5000)
-	  .attr("opacity",1);
-
-      svg.append("use")
-	  .attr("xlink:href", "#frame")
-	  .attr("class", "stroke");
-
-  }
-
-  function floor(k) {
-      return Math.pow(2, Math.floor(Math.log(k) / Math.LN2));
-  }
-
-  d3.json("hexGrid.GeoJSON", function(error, hex) {//hexColors.GeoJSON
-       var hexes = svg.selectAll("path")
-    	  .data(hex.features)
-    	  .enter().append("path")
-   	  .on("click", clickHex)
-    	  .attr("class", "hex")
-           .attr("d", path)
-   	   .attr("fill", function(d) { return d.properties.color; })//col1
-   	  // .transition()
-   	  // .on("start", function repeat() {
-          //     d3.active(this)
-	  // 	  .transition().duration(1000)
-   	  // 	  .attr("fill", function(d) { return d.properties.col1; })
-   	  // 	  .transition().duration(1000)
-   	  // 	  .attr("fill", function(d) { return d.properties.col2; })
-   	  // 	  .transition().duration(1000)
-   	  // 	  .attr("fill", function(d) { return d.properties.col3; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col4; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col5; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col6; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col7; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col8; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col9; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col10; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col11; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col12; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col13; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col14; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col15; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col16; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col17; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col18; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col19; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col20; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col21; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col22; })
-   	  // 	  .transition().duration(1000)
-   	  //     	  .attr("fill", function(d) { return d.properties.col23; })
-   	  // 	  .transition().duration(1000)
-   	  // 	  .attr("fill", function(d) { return d.properties.col24; })
-   	  // 	  .on("start", repeat);
-   	  // });
-  });
-</script>
-</body>
+    </script>
+  </body>
+</html>
