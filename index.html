@@ -238,93 +238,84 @@
 
 	  legend.exit().remove();
       }
+      
       var data;
-      d3.json("data.json", function(error, hex) {
+      d3.json("index1.json", function(error, hex) {
+	  console.log(hex)
 	  data = hex;
       });
 
-      function search(index, day, hour) {
+     
+      function search(index) {
 	  for (var i=0; i < data.children.length;i++) {
-	      console.log("here");
-	      if (data.children[i].name==index) {
-		  for (var j=0; j < data.children[i].children.length; j++) {
-		      if (data.children[i].children[j].name==day) {
-			  for (var k=0; k < data.children[i].children[j].children.length; k++) {
-			      if
-				  (data.children[i].children[j].children[k].name==hour)
-			      {
-				  console.log("here2")
-				  return data.children[i].children[j].children[k].Percentage;
-			      }
-			  }
-		      }
-		  }
-	      }
-	  }
+              if (data.children[i].name==index) {
+      		  return data.children[i];
+      	      }
+      	  }
       }
       
-      
-      d3.json("hexGrid.GeoJSON", function(error, hex) {//hexColors.GeoJSON
+      d3.json("hexColors.GeoJSON", function(error, hex) {//hexColors.GeoJSON
 	  var hexes = svg.selectAll("path")
     	      .data(hex.features)
     	      .enter().append("path")
    	      .on("click", clickHex)
     	      .attr("class", "hex")
               .attr("d", path)
-   	      .attr("fill", function(d) { return d.properties.color; })//col1
-   	      // .transition()
-   	      // .on("start", function repeat() {
-	      // 	  d3.active(this)
-   	      // 	      .attr("fill", function(d) { return d.properties.col1; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col2; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col3; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col4; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col5; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col6; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col7; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col8; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col9; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col10; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col11; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col12; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col13; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col14; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col15; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col16; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col17; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col18; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col19; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col20; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col21; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col22; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col23; })
-   	      // 	      .transition().duration(1000)
-   	      // 	      .attr("fill", function(d) { return d.properties.col24; })
-   	      // 	      .on("start", repeat);
-   	      // });
+   	      .attr("fill", function(d) { return d.properties.col1; })//col1
+   	      .transition()
+   	      .on("start", function repeat() {
+	      	  d3.active(this)
+   	      	      .attr("fill", function(d) { return d.properties.col1; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col2; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col3; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col4; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col5; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col6; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col7; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col8; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col9; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col10; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col11; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col12; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col13; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col14; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col15; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col16; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col17; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col18; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col19; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col20; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col21; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col22; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col23; })
+   	      	      .transition().duration(1000)
+   	      	      .attr("fill", function(d) { return d.properties.col24; })
+   	      	      .on("start", repeat);
+   	      });
       });
+
     </script>
   </body>
 </html>

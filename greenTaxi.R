@@ -157,5 +157,16 @@ freqdf <- function(i) {
     names(tbl) <- c("day","hour","value")
     tbl$hour <- as.numeric(as.character(tbl$hour))
     ##print(str(tbl))
-    return(tbl)
+    return(toJSON(tbl))
 }
+
+
+rm(json)
+
+for (i in head(hex@data$index)) {
+    json <- paste0('{"index":', i, ',"children":', freqdf(i), '}')
+    write(json,paste0("index",i,".json"))
+}
+
+json <- paste0('{"data":',json,"}")
+write(json,"test.json")
