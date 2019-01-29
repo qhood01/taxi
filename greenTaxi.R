@@ -14,13 +14,7 @@ boros <- readOGR("~/Downloads/nybb_18d/","nybb")
 boros <- boros[boros$BoroName != "Staten Island",]
 boros <- spTransform(boros,CRS("+init=epsg:4326"))
 
-writeOGR(boros, "boros.GeoJSON", layer="boros", driver="GeoJSON")
-
-borosUTM <- CRS("+proj=utm +zone=18N +datum=WGS84 +units=km +no_defs") %>%
-  spTransform(boros, .)
-
-
-make_grid <- function(x, cell_diameter, cell_area, clip = FALSE) {
+make_grid <- function(x, cell_diameter, cell_area, clip = TRUE) {
   if (missing(cell_diameter)) {
     if (missing(cell_area)) {
       stop("Must provide cell_diameter or cell_area")
@@ -46,30 +40,6 @@ make_grid <- function(x, cell_diameter, cell_area, clip = FALSE) {
   return(g)
 }
 
-hexNoClip <- make_grid(borosUTM, cell_area = .4, clip = FALSE)
-plot(boros, col = "grey50", bg = "light blue", axes = FALSE)
-plot(hexNoClip, border = "orange", add = TRUE)
-box()
-
-spdf <- SpatialPolygonsDataFrame(hex_grid,data=data.frame("color"=rep(brewer.pal(5,"Dark2"),2005/5)))
-spdf <- spTransform(spdf,CRS("+init=epsg:4326"))
-writeOGR(spdf, "hexGrid.GeoJSON", layer="hex", driver="GeoJSON")
-
-
-
-
-taxisShort <- taxis[1:500000,c("Pickup_longitude","Pickup_latitude","lpep_pickup_datetime","Lpep_dropoff_datetime")]
-
-pHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
-pHoursAM <- ifelse(grepl("PM",taxisShort$lpep_pickup_datetime),pHours+12,pHours)
-taxisShort$pHour <- pHoursAM
-
-dHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
-dHoursAM <- ifelse(grepl("PM",taxisShort$Lpep_dropoff_datetime),dHours+12,dHours)
-taxisShort$dHour <- dHoursAM
-
-taxisShort$wday <- weekdays(as.Date(substr(taxisShort$lpep_pickup_datetime,1,10),format="%M/%d/%Y"))
-
 coords <- taxisShort[!is.na(taxisShort$Pickup_longitude)&
                      !is.na(taxisShort$Pickup_latitude),
                      c("Pickup_longitude","Pickup_latitude","pHour","wday")]
@@ -81,8 +51,8 @@ proj4string(spdf) <- CRS("+init=epsg:4326")
 
 borosUTM <- CRS("+proj=utm +zone=18N +datum=WGS84 +units=km +no_defs") %>%
   spTransform(boros, .)
-hexClip <- make_grid(borosUTM, cell_area = .4, clip = FALSE)
-hex <- SpatialPolygonsDataFrame(hexClip,data=data.frame("index"=1:1925))
+hexClip <- make_grid(borosUTM, cell_area = .4, clip = TRUE)
+hex <- SpatialPolygonsDataFrame(hexClip,data=data.frame("index"=1:2012))
 hex <- spTransform(hex,proj4string(spdf))
 hex$index <- 1:nrow(hex)
 overDF <- over(spdf,hex)
@@ -99,74 +69,49 @@ for (i in 1:24) {
     hex@data[colName] <- colorFunction(hex@data[,as.character(i)])
 }
 
-hex@data$color <- colorFunction(hex@data$freq)
+hex@data$color <- rep(c('#7fc97f','#beaed4','#fdc086','#ffff99'),2012/4)
 
-bkUTM <- CRS("+proj=utm +zone=18N +datum=WGS84 +units=km +no_defs") %>%
-  spTransform(bk, .)
-bkNoClip <- make_grid(bkUTM, cell_area = .4, clip = FALSE)
-bkHex <- SpatialPolygonsDataFrame(bkNoClip,data=data.frame("index"=1:559))
-bkHex <- spTransform(bkHex,CRS("+init=epsg:4326"))
-bkHex <- spTransform(bkHex,proj4string(spdf))
-bkHex$index <- 1:nrow(bkHex)
-overDF <- over(spdf,bkHex)
-spdf$index <- overDF$index
-puHrCount <- table(spdf$index,spdf$coords.pHour)
-puHrCount <- as.data.frame.matrix(puHrCount) %>% rownames_to_column("index")
-puHrCount$index <- as.numeric(as.character(puHrCount$index))
-bkHex@data <- left_join(bkHex@data,puHrCount)
-bkHex@data[is.na(bkHex@data)] <- 0
-bkCentHex <- centroid(bkHex)
-colnames(bkCentHex) <- c("Lat","Lon")
-bkCentHex <- cbind(bkCentHex,bkHex@data[,-1])
-names(bkCentHex)[-c(1:2)] <- paste0("num",1:24)
+writeOGR(hex, "hexGrid.GeoJSON", layer="hex", driver="GeoJSON",overwrite_layer=TRUE)
 
-mylist <- list()
-mylist_ <- list()
-for(i in 1:nrow(hex@data)) {
-    for(j in 1:24) {
-        name  <- paste0("col",j)
-        mylist[[name]] <- hex@data[i,name]
- }
-mylist_[[i]] <- mylist
-}
-
-mylist <- list()
-mylist_ <- list()
-for(i in 1:7) {
-    for(j in 1:24) {
-        name  <- paste0("col",j)
-        mylist[[name]] <- hex@data[i,name]
- }
-mylist_[[i]] <- mylist
-}
-
-dayHr <- as.data.frame(table(spdf$index,spdf$wday,spdf$phour))
-names(dayHr) <- c("Index","Day","Hour","Value")
+spdf$wday <- factor(spdf$wday,c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+spdf$wday <- as.factor(as.numeric(spdf$wday))
+spdf$phour <- as.factor(spdf$phour)
 
 freqdf <- function(i) {
     if (i %in% spdf$index) {
-        spdf@data$phour <- as.factor(spdf@data$phour)
         df <- spdf@data[which(spdf$index==i),]
-        df$phour <- as.factor(df$phour)
         tbl <- as.data.frame(table(df$wday,df$phour))
     } else {
-        tbl <- data.frame("day"=rep(levels(spdf$wday),24),
+        tbl <- data.frame("day"=rep(1:7,24),
                           "hour"=unlist(lapply(1:24,function(x) rep(x,7))),
                           "value"=0)
     }
     names(tbl) <- c("day","hour","value")
     tbl$hour <- as.numeric(as.character(tbl$hour))
-    ##print(str(tbl))
-    return(toJSON(tbl))
+    return(jsonlite::toJSON(tbl,dataframe="rows"))
 }
-
 
 rm(json)
-
-for (i in head(hex@data$index)) {
-    json <- paste0('{"index":', i, ',"children":', freqdf(i), '}')
-    write(json,paste0("index",i,".json"))
+for (i in hex@data$index) {
+    if(exists("json")) {
+        json <- paste0('{"index":', i, ',"children":', freqdf(i), '},',json)
+    } else {
+        json <- paste0('{"index":', i, ',"children":', freqdf(i), '}')
+    }
 }
+json <- paste0('{"data": [',json,"]}")
+write(json,"data.json")
 
-json <- paste0('{"data":',json,"}")
-write(json,"test.json")
+
+
+## taxisShort <- taxis[1:500000,c("Pickup_longitude","Pickup_latitude","lpep_pickup_datetime","Lpep_dropoff_datetime")]
+
+## pHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
+## pHoursAM <- ifelse(grepl("PM",taxisShort$lpep_pickup_datetime),pHours+12,pHours)
+## taxisShort$pHour <- pHoursAM
+
+## dHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
+## dHoursAM <- ifelse(grepl("PM",taxisShort$Lpep_dropoff_datetime),dHours+12,dHours)
+## taxisShort$dHour <- dHoursAM
+
+## taxisShort$wday <- weekdays(as.Date(substr(taxisShort$lpep_pickup_datetime,1,10),format="%M/%d/%Y"))
