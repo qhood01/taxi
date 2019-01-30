@@ -62,9 +62,9 @@ puHrCount <- as.data.frame.matrix(puHrCount) %>% rownames_to_column("index")
 puHrCount$index <- as.numeric(as.character(puHrCount$index))
 hex@data <- left_join(hex@data,puHrCount)
 hex@data[is.na(hex@data)] <- 0
-colorFunction <- colorNumeric("BuPu",domain=c(0,max(hex@data[,2:25])))
+colorFunction <- colorNumeric("YlGnBu",domain=c(0,max(hex@data[,2:25])))
 
-for (i in 1:24) {
+for (i in 0:23) {
     colName <- paste0("col",i)
     hex@data[colName] <- colorFunction(hex@data[,as.character(i)])
 }
@@ -74,7 +74,7 @@ hex@data$color <- rep(c('#7fc97f','#beaed4','#fdc086','#ffff99'),2012/4)
 writeOGR(hex, "hexGrid.GeoJSON", layer="hex", driver="GeoJSON",overwrite_layer=TRUE)
 
 spdf$wday <- factor(spdf$wday,c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
-spdf$wday <- as.factor(as.numeric(spdf$wday))
+spdf$wday <- as.factor(as.numeric(spdf$wday)-1)
 spdf$phour <- as.factor(spdf$phour)
 
 freqdf <- function(i) {
@@ -107,7 +107,8 @@ write(json,"data.json")
 ## taxisShort <- taxis[1:500000,c("Pickup_longitude","Pickup_latitude","lpep_pickup_datetime","Lpep_dropoff_datetime")]
 
 ## pHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
-## pHoursAM <- ifelse(grepl("PM",taxisShort$lpep_pickup_datetime),pHours+12,pHours)
+## pHoursAM <- ifelse(grepl("PM",taxisShort$lpep_pickup_datetime)&pHours<12,pHours+12,pHours)
+## pHoursAM[which(grepl("AM",taxisShort$lpep_pickup_datetime)&pHours==12)] <- 0
 ## taxisShort$pHour <- pHoursAM
 
 ## dHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))

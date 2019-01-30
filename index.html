@@ -32,7 +32,7 @@
   <body>
     <script>
 
-      var width = 1400;
+      var width = 1600;
       var height = 800;
 
       var svg = d3.select('body').append('svg')
@@ -44,9 +44,9 @@
 	  hexCenterY = height/3;
 	  
       var projection = d3.geoMercator()
-	  .center([-73.936361, 40.72])
-	  .scale(80000)
-	  .translate([(width) / 6, (height)/2]);
+	  .center([-73.936361, 40.73])
+	  .scale(93000)
+	  .translate([(width) / 4, (height)/2]);
 
       var path = d3.geoPath()
 	  .projection(projection);
@@ -60,9 +60,9 @@
 	  gridOffy = 3*height/4,
 	  legendElementWidth = gridSize*2,
 	  buckets = 9,
-	  colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"],
+	  colors = ['#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e','#7a0177','#49006a'],
 	  days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-	  times = ["1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12a", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12p"];      
+	  times = ["12a", "1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12p", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p"];      
 
       function clickHex(d) {
 
@@ -84,9 +84,8 @@
 	      .attr("y", (gridOffy))
 	      .style("text-anchor", "middle")
 	      .attr("transform", "translate(" + gridSize / 2 + ", -6)")
-	      .attr("class", function(d, i) { return ((i >= 7 && i <= 16) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
+	      .attr("class", function(d, i) { return ((i >= 8 && i <= 17) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
 
-	  console.log(d)
 	  arr = search(d.id)
 	  heatmap(arr)
 
@@ -209,14 +208,14 @@
 	  cards.append("title");
 
 	  cards.enter().append("rect")
-	      .attr("x", function(d) { return (((d.hour - 1) * gridSize)+gridOffx); })
-	      .attr("y", function(d) { return (((d.day - 1) * gridSize)+gridOffy); })
+	      .attr("x", function(d) { return ((d.hour * gridSize)+gridOffx); })
+	      .attr("y", function(d) { return ((d.day * gridSize)+gridOffy); })
               .attr("rx", 4)
               .attr("ry", 4)
               .attr("class", "hour bordered")
               .attr("width", gridSize)
               .attr("height", gridSize)
-              .style("fill", colors[0]);
+              .style("fill", function(d) { return colorScale(d.value); });
 
 	  cards.transition().duration(1000)
               .style("fill", function(d) { return colorScale(d.value); });
@@ -225,26 +224,28 @@
 	  
 	  cards.exit().remove();
 
+	  console.log([0].concat(colorScale.quantiles()));
+
 	  var legend = svg.selectAll(".legend")
               .data([0].concat(colorScale.quantiles()), function(d) { return d; });
 
-	  legend.enter().append("g")
+          legend.enter().append("g")
               .attr("class", "legend");
 
-	  legend.append("rect")
-	      .attr("x", function(d, i) { return ((legendElementWidth * i)+gridOffx); })
-              .attr("y", height)
-              .attr("width", legendElementWidth)
-              .attr("height", gridSize / 2)
-              .style("fill", function(d, i) { return colors[i]; });
+          legend.append("rect")
+              .attr("x", function(d, i) { return (legendElementWidth * i)+gridOffx; })
+              .attr("y", (gridOffy+(8*gridSize)))
+	      .attr("width", legendElementWidth)
+	      .attr("height", gridSize / 2)
+              .style("fill", function(d, i) { console.log(i); return colors[i]; });
 
-	  legend.append("text")
+          legend.append("text")
               .attr("class", "mono")
               .text(function(d) { return "≥ " + Math.round(d); })
-	      .attr("x", function(d, i) { return ((legendElementWidth * i)+gridOffx); })
-              .attr("y", height + gridSize);
+              .attr("x", function(d, i) { return (legendElementWidth * i)+gridOffx; })
+              .attr("y", (gridOffy+(9*gridSize)));
 
-	  legend.exit().remove();
+          legend.exit().remove();
       }
       
       var data;
@@ -261,66 +262,68 @@
       	  }
       }
       
-      d3.json("hexNew.GeoJSON", function(error, hex) {//hexColors.GeoJSON
+      d3.json("hexGrid.GeoJSON", function(error, hex) {//hexColors.GeoJSON
 	  var hexes = svg.selectAll("path")
     	      .data(hex.features)
     	      .enter().append("path")
    	      .on("click", clickHex)
     	      .attr("class", "hex")
               .attr("d", path)
+	      .attr("stroke","#d9d9d9")
+	      .attr("stroke-width",1)
    	      .attr("fill", function(d) { return d.properties.color; })//col1
-      // 	      .transition()
-      // 	      .on("start", function repeat() {
-      // 	      	  d3.active(this)
-      // 	      	      .attr("fill", function(d) { return d.properties.col1; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col2; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col3; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col4; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col5; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col6; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col7; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col8; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col9; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col10; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col11; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col12; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col13; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col14; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col15; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col16; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col17; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col18; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col19; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col20; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col21; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col22; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col23; })
-      // 	      	      .transition().duration(1000)
-      // 	      	      .attr("fill", function(d) { return d.properties.col24; })
-      // 	      	      .on("start", repeat);
-      // 	      });
+      	      .transition()
+      	      .on("start", function repeat() {
+      	      	  d3.active(this)
+      	      	      .attr("fill", function(d) { return d.properties.col1; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col2; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col3; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col4; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col5; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col6; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col7; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col8; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col9; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col10; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col11; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col12; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col13; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col14; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col15; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col16; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col17; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col18; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col19; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col20; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col21; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col22; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col23; })
+      	      	      .transition().duration(1000)
+      	      	      .attr("fill", function(d) { return d.properties.col24; })
+      	      	      .on("start", repeat);
+      	      });
       });
 
     </script>
