@@ -271,7 +271,7 @@
               .attr("d", path)
 	      .attr("stroke","#d9d9d9")
 	      .attr("stroke-width",1)
-   	      .attr("fill", function(d) { return d.properties.color; })//col1
+   	      .attr("fill", function(d) { return d.properties.col1; })//col1
       	      .transition()
       	      .on("start", function repeat() {
       	      	  d3.active(this)
