@@ -33,7 +33,7 @@
     <script>
 
       var width = 1600;
-      var height = 800;
+      var height = 750;
 
       var svg = d3.select('body').append('svg')
 	  .attr('width', width)
@@ -45,7 +45,7 @@
 	  
       var projection = d3.geoMercator()
 	  .center([-73.936361, 40.73])
-	  .scale(93000)
+	  .scale(87000)
 	  .translate([(width) / 4, (height)/2]);
 
       var path = d3.geoPath()
@@ -57,7 +57,7 @@
       // Heatmap Setup
       var gridSize = Math.floor((width/3) / 24),
 	  gridOffx = hexCenterX-(width/6),
-	  gridOffy = 3*height/4,
+	  gridOffy = 7*height/10,
 	  legendElementWidth = gridSize*2,
 	  buckets = 9,
 	  colors = ['#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e','#7a0177','#49006a'],
@@ -201,6 +201,8 @@
 	  var colorScale = d3.scaleQuantile()
               .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
               .range(colors);
+
+	  svg.selectAll(".hour").remove();
 	  
 	  var cards = svg.selectAll(".hour")
               .data(data, function(d) {return d.day+':'+d.hour;});
@@ -223,41 +225,42 @@
 	  cards.select("title").text(function(d) { return d.value; });
 	  
 	  cards.exit().remove();
-
-	  console.log([0].concat(colorScale.quantiles()));
+	  
+	  var legendData = [0].concat(colorScale.quantiles());
 
 	  var legend = svg.selectAll(".legend")
-              .data([0].concat(colorScale.quantiles()), function(d) { return d; });
+              .data(legendData);
 
           legend.enter().append("g")
               .attr("class", "legend");
 
           legend.append("rect")
               .attr("x", function(d, i) { return (legendElementWidth * i)+gridOffx; })
-              .attr("y", (gridOffy+(8*gridSize)))
-	      .attr("width", legendElementWidth)
-	      .attr("height", gridSize / 2)
-              .style("fill", function(d, i) { console.log(i); return colors[i]; });
+              .attr("y", gridOffy+(8*gridSize))
+              .attr("width", legendElementWidth)
+              .attr("height", gridSize / 2)
+              .style("fill", function(d, i) { return colors[i]; });
 
+	  svg.selectAll("#mono").remove();
+	  
           legend.append("text")
               .attr("class", "mono")
-              .text(function(d) { return "≥ " + Math.round(d); })
+              .text(function(d, i) { return "≥ " + Math.round(d); })
               .attr("x", function(d, i) { return (legendElementWidth * i)+gridOffx; })
-              .attr("y", (gridOffy+(9*gridSize)));
+              .attr("y", gridOffy+(9*gridSize));
 
           legend.exit().remove();
       }
       
-      var data;
+      var taxiData;
       d3.json("data.json", function(error, d) {
-	  data = d;
+	  taxiData = d;
       });
-
      
       function search(index) {
-	  for (var i=0; i < data.data.length;i++) {
-              if (data.data[i].index==index) {
-      		  return data.data[i].children;
+	  for (var i=0; i < taxiData.data.length;i++) {
+              if (taxiData.data[i].index==index) {
+      		  return taxiData.data[i].children;
       	      }
       	  }
       }
@@ -271,59 +274,59 @@
               .attr("d", path)
 	      .attr("stroke","#d9d9d9")
 	      .attr("stroke-width",1)
-   	      .attr("fill", function(d) { return d.properties.col1; })//col1
-      	      .transition()
-      	      .on("start", function repeat() {
-      	      	  d3.active(this)
-      	      	      .attr("fill", function(d) { return d.properties.col1; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col2; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col3; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col4; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col5; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col6; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col7; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col8; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col9; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col10; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col11; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col12; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col13; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col14; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col15; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col16; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col17; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col18; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col19; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col20; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col21; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col22; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col23; })
-      	      	      .transition().duration(1000)
-      	      	      .attr("fill", function(d) { return d.properties.col24; })
-      	      	      .on("start", repeat);
-      	      });
+   	      .attr("fill", function(d) { return d.properties.color; })//col1
+      	      // .transition()
+      	      // .on("start", function repeat() {
+      	      // 	  d3.active(this)
+      	      // 	      .attr("fill", function(d) { return d.properties.col1; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col2; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col3; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col4; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col5; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col6; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col7; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col8; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col9; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col10; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col11; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col12; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col13; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col14; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col15; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col16; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col17; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col18; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col19; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col20; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col21; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col22; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col23; })
+      	      // 	      .transition().duration(1000)
+      	      // 	      .attr("fill", function(d) { return d.properties.col24; })
+      	      // 	      .on("start", repeat);
+      	      // });
       });
 
     </script>
