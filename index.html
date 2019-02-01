@@ -131,9 +131,12 @@
 	      p0 = projectionNew([bounds[0][0], bounds[1][1]]),
 	      p1 = projectionNew([bounds[1][0], bounds[0][1]]);      
 
-	  var k = floor(0.95 / Math.max((p1[0] - p0[0]) / width, (p1[1] - p0[1]) / height)),
+	  // Had to hardcode because of shapes that aren't hexagons
+	  var k = 16777216,//floor(0.95 / Math.max((p1[0] - p0[0]) / width, (p1[1] - p0[1]) / height)),
 	      tx = (width - k * (p1[0] + p0[0])) / 2,
 	      ty = (height - k * (p1[1] + p0[1])) / 2;
+
+	  console.log(k);
 	  
 	  projectionNew
       	      .scale(k / tau)
@@ -246,7 +249,7 @@
 	      .append("text")
 	      .attr("id", "legendText")
               .attr("class", "mono")
-              .text(function(d, i) { console.log(d); return "≥ " + Math.round(d); })
+              .text(function(d, i) { return "≥ " + Math.round(d); })
               .attr("x", function(d, i) { return (legendElementWidth * i)+gridOffx; })
               .attr("y", gridOffy+(9*gridSize));
       }
@@ -265,7 +268,6 @@
       }
 
       function changeTime(i) {
-	  console.log("changeTime")
 	  svg.selectAll("#time").remove();
 	  time = times[i];
 	  svg.append("text")

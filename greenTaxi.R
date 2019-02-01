@@ -82,8 +82,8 @@ freqdf <- function(i) {
         df <- spdf@data[which(spdf$index==i),]
         tbl <- as.data.frame(table(df$wday,df$phour))
     } else {
-        tbl <- data.frame("day"=rep(1:7,24),
-                          "hour"=unlist(lapply(1:24,function(x) rep(x,7))),
+        tbl <- data.frame("day"=rep(0:6,24),
+                          "hour"=unlist(lapply(0:23,function(x) rep(x,7))),
                           "value"=0)
     }
     names(tbl) <- c("day","hour","value")
