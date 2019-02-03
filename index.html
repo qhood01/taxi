@@ -24,21 +24,23 @@
       text.axis-worktime {
           fill: #000;
       }
+      .x-axis line, .x-axis path { stroke: #fff; }
     </style>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
     <script src="https://d3js.org/topojson.v2.min.js"></script>
     <script src="//d3js.org/d3-tile.v0.0.min.js"></script>
+    <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
   </head>
   <body>
     <div id="chart"></div>
   <body>
     <script>
-
+      
       var width = 1600;
       var height = 750;
 
-      var svg = d3.select('body').append('svg')
+      var svg = d3.select("body").append('svg')
 	  .attr('width', width)
 	  .attr('height', height);
 
@@ -57,15 +59,19 @@
       var pi = Math.PI,
 	  tau = 2 * pi;
 
-      // Heatmap Setup
+      var legendWidth = 300,
+	  legendHeight = 20;
+      
       var gridSize = Math.floor((width/3) / 24),
 	  gridOffx = hexCenterX-(width/6),
 	  gridOffy = 7*height/10,
 	  legendElementWidth = gridSize*2,
 	  buckets = 9,
-	  colors = ['#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1','#dd3497','#ae017e','#7a0177','#49006a'],
+	  colors = ['#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1',
+		    '#dd3497','#ae017e','#7a0177','#49006a'],
+	  mapColors = ['#ffffd9','#edf8b1','#c7e9b4','#7fcdbb','#41b6c4',
+		       '#1d91c0','#225ea8','#253494','#081d58'],
 	  days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-
 	  times = ["12a", "1a", "2a", "3a", "4a", "5a", "6a", "7a",
 		   "8a", "9a", "10a", "11a", "12p", "1p", "2p", "3p",
 		   "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p"],
@@ -76,8 +82,11 @@
 		       "7:00PM", "8:00PM", "9:00PM", "10:00PM",
 		       "11:00PM"];
 
+      var mapColorScale = d3.scaleSequential(d3.interpolateYlGnBu)
+	  .domain([0, 1011]);
+      
       function clickHex(d) {
-
+	  
 	  var dayLabels = svg.selectAll(".dayLabel")
 	      .data(days)
 	      .enter().append("text")
@@ -213,12 +222,13 @@
       }
 
       function heatmap(data) {
-	  var colorScale = d3.scaleQuantile()
-              .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
-              .range(colors);
+	  // var colorScale = d3.scaleQuantile()
+          //     .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
+          //     .range(colors);
 
-	  svg.selectAll(".hour").remove();
-	  
+	  var colorScale = d3.scaleSequential(d3.interpolatePuRd)
+              .domain([0, d3.max(data, function (d) { return d.value; })]);
+
 	  var cards = svg.selectAll(".hour")
               .data(data, function(d) {return d.day+':'+d.hour;});
 
@@ -241,29 +251,41 @@
 	  
 	  cards.exit().remove();
 	  
-	  var legendData = [0].concat(colorScale.quantiles());
-
-          svg.selectAll(".legendBar")
-              .data(legendData)
-	      .enter()
-	      .append("rect")
-              .attr("x", function(d, i) { return (legendElementWidth * i)+gridOffx; })
-              .attr("y", gridOffy+(8*gridSize))
-              .attr("width", legendElementWidth)
-              .attr("height", gridSize / 2)
-              .style("fill", function(d, i) { return colors[i]; });
-
-	  svg.selectAll("#legendText").remove();
+	  svg.selectAll("#heat-gradient").remove();
+	  svg.selectAll("#heat-axis").remove();
 	  
-          svg.selectAll(".legendText")
-              .data(legendData)
-	      .enter()
-	      .append("text")
-	      .attr("id", "legendText")
-              .attr("class", "mono")
-              .text(function(d, i) { return "≥ " + Math.round(d); })
-              .attr("x", function(d, i) { return (legendElementWidth * i)+gridOffx; })
-              .attr("y", gridOffy+(9*gridSize));
+	  var heatLinearGradient = svg.append("linearGradient")
+		.attr("id", "heat-gradient");
+      
+	  heatLinearGradient.selectAll("stop")
+	      .data(colorScale.ticks().map((t, i, n) => ({ offset: `${100*i/n.length}%`, color: colorScale(t) })))
+	      .enter().append("stop")
+	      .attr("offset", d => d.offset)
+	      .attr("stop-color", d => d.color);
+	  
+	  svg.append('g')
+	      .append("rect")
+	      .attr("x",gridOffx)
+	      .attr("y",gridOffy+(8*gridSize))
+	      .attr("width", 16*gridSize)
+	      .attr("height", legendHeight)
+	      .style("fill", "url(#heat-gradient)");
+	  
+	  heatAxisScale = d3.scaleLinear()
+	      .domain(colorScale.domain())
+	      .range([gridOffx, gridOffx+(16*gridSize)])
+	  
+	  axisBottom = g => g
+	      .attr("class", `x-axis`)
+	      .attr("transform", 'translate(0,'+(gridOffy+(8*gridSize)+legendHeight)+')')
+	      .call(d3.axisBottom(heatAxisScale)
+		    .ticks(10)
+		    .tickSize(-legendHeight))
+	  
+	  svg.append('g')
+	      .attr("id","heat-axis")
+	      .call(axisBottom);
+	  
       }
       
       var taxiData;
@@ -278,17 +300,42 @@
       	      }
       	  }
       }
-
-      function changeTime(i) {
-	  time = times[i];
-	  console.log(time)
-	  d3.select("text").text(time);
-      }
       
-      d3.json("hexGrid.GeoJSON", function(error, hex) {//hexColors.GeoJSON
+      d3.json("hexGrid.GeoJSON", function(error, hex) {
+	  var linearGradient = svg.append("linearGradient")
+	      .attr("id", "linear-gradient");
+	  
+	  linearGradient.selectAll("stop")
+	      .data(mapColorScale.ticks().map((t, i, n) => ({ offset: `${100*i/n.length}%`, color: mapColorScale(t) })))
+	      .enter().append("stop")
+	      .attr("offset", d => d.offset)
+	      .attr("stop-color", d => d.color);
+	  
+	  svg.append('g')
+	      .append("rect")
+	      .attr("transform","translate(40,20)")
+	      .attr("width", legendWidth)
+	      .attr("height", legendHeight)
+	      .style("fill", "url(#linear-gradient)");
+	  
+	  axisScale = d3.scaleLinear()
+	      .domain(mapColorScale.domain())
+	      .range([40, legendWidth+40])
+	  
+	  axisBottom = g => g
+	      .attr("class", `x-axis`)
+	      .attr("transform", 'translate(0,'+(20+legendHeight)+')')
+	      .call(d3.axisBottom(axisScale)
+		    .ticks(10)
+		    .tickSize(-legendHeight))
+	  
+	  svg.append('g')
+	      .call(axisBottom);
+	  
 	  svg.append("text")
-	      .attr("x",230)
-	      .attr("y",60)
+	      .attr("x",(40+legendWidth)-(legendWidth/2))
+	      .attr("y",100)
+	      .attr("text-anchor", "middle")
 	      .attr("class","time")
 	      .text(timesFull[0])
 	      .transition()
@@ -358,53 +405,53 @@
 	      .on("start", function repeat() {
 		  d3.active(this)
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col0; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num0); })
 		      .transition().duration(2000)
-		      .attr("fill", function(d) { return d.properties.col1; })
+		      .attr("fill", function(d) { return mapColorScale(d.properties.num1); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col2; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num2); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col3; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num3); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col4; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num4); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col5; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num5); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col6; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num6); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col7; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num7); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col8; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num8); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col9; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num9); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col10; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num10); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col11; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num11); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col12; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num12); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col13; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num13); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col14; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num14); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col15; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num15); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col16; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num16); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col17; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num17); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col18; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num18); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col19; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num19); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col20; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num20); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col21; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num21); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col22; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num22); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return d.properties.col23; })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num23); })
       	      	      .on("start", repeat);
 	      });
       });

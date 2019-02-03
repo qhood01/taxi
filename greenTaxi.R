@@ -70,7 +70,7 @@ for (i in 0:23) {
 }
 
 hex@data$color <- rep(c('#7fc97f','#beaed4','#fdc086','#ffff99'),2012/4)
-
+names(hex@data)[2:25] <- paste0("num",0:23)
 writeOGR(hex, "hexGrid.GeoJSON", layer="hex", driver="GeoJSON",overwrite_layer=TRUE)
 
 spdf$wday <- factor(spdf$wday,c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
