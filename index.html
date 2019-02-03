@@ -38,7 +38,7 @@
     <script>
       
       var width = 1500;
-      var height = 700;
+      var height = 750;
 
       var svg = d3.select("body").append('svg')
 	  .attr('width', width)
@@ -50,7 +50,7 @@
 	  
       var projection = d3.geoMercator()
 	  .center([-73.936361, 40.73])
-	  .scale(87000)
+	  .scale(85000)
 	  .translate([(width) / 4, (height)/2]);
 
       var path = d3.geoPath()
@@ -133,18 +133,10 @@
 	      max1 = 0;
 
 	  d.geometry.coordinates[0][0].forEach(function(d) {
-	      if (d[0] < min0) {	      
-		  min0 = d[0]
-	      }
-	      if (d[1] < min1) {
-		  min1 = d[1]
-	      }
-	      if (d[0] > max0) {
-		  max0 = d[0]
-	      }
-	      if (d[1] > max1) {
-		  max1 = d[1]
-	      }
+	      min0 = d[0] < min0 ? d[0] : min0
+	      min1 = d[1] < min1 ? d[1] : min1
+	      max0 = d[0] > max0 ? d[0] : max0
+	      max1 = d[1] > max1 ? d[1] : max1
 	  });
 	  
 	  var bounds = [[min0,min1],[max0,max1]],
