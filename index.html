@@ -37,15 +37,15 @@
   <body>
     <script>
       
-      var width = 1600;
-      var height = 750;
+      var width = 1500;
+      var height = 700;
 
       var svg = d3.select("body").append('svg')
 	  .attr('width', width)
 	  .attr('height', height);
 
       // Map Setup
-      var hexCenterX = 3*width/4,
+      var hexCenterX = width*0.75,
 	  hexCenterY = height/3;
 	  
       var projection = d3.geoMercator()
@@ -64,9 +64,8 @@
       
       var gridSize = Math.floor((width/3) / 24),
 	  gridOffx = hexCenterX-(width/6),
-	  gridOffy = 7*height/10,
+	  gridOffy = height*0.7,
 	  legendElementWidth = gridSize*2,
-	  buckets = 9,
 	  colors = ['#fff7f3','#fde0dd','#fcc5c0','#fa9fb5','#f768a1',
 		    '#dd3497','#ae017e','#7a0177','#49006a'],
 	  mapColors = ['#ffffd9','#edf8b1','#c7e9b4','#7fcdbb','#41b6c4',
