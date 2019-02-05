@@ -73,6 +73,14 @@ hex@data$color <- rep(c('#7fc97f','#beaed4','#fdc086','#ffff99'),2012/4)
 names(hex@data)[2:25] <- paste0("num",0:23)
 writeOGR(hex, "hexGrid.GeoJSON", layer="hex", driver="GeoJSON",overwrite_layer=TRUE)
 
+
+uniqueDates <- unique(taxisShort[,c("wday","pickupDate")])
+uniqueDates$wday <- factor(uniqueDates$wday,c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+uniqueDates$wday <- as.factor(as.numeric(uniqueDates$wday)-1)
+uniqueDates$phour <- as.factor(uniqueDates$phour)
+daysFreq <- as.data.frame(table(uniqueDates$wday))
+names(daysFreq) <- c("day","freq")
+
 spdf$wday <- factor(spdf$wday,c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
 spdf$wday <- as.factor(as.numeric(spdf$wday)-1)
 spdf$phour <- as.factor(spdf$phour)
@@ -81,13 +89,16 @@ freqdf <- function(i) {
     if (i %in% spdf$index) {
         df <- spdf@data[which(spdf$index==i),]
         tbl <- as.data.frame(table(df$wday,df$phour))
+        names(tbl) <- c("day","hour","value")
+        tbl <- left_join(tbl,daysFreq)
+        tbl$avg <- tbl$value/tbl$freq
+        tbl$hour <- as.numeric(as.character(tbl$hour))
+        tbl <- tbl[,c("day","hour","avg")]
     } else {
         tbl <- data.frame("day"=rep(0:6,24),
                           "hour"=unlist(lapply(0:23,function(x) rep(x,7))),
-                          "value"=0)
+                          "avg"=0)
     }
-    names(tbl) <- c("day","hour","value")
-    tbl$hour <- as.numeric(as.character(tbl$hour))
     return(jsonlite::toJSON(tbl,dataframe="rows"))
 }
 
@@ -102,17 +113,17 @@ for (i in hex@data$index) {
 json <- paste0('{"data": [',json,"]}")
 write(json,"data.json")
 
+##taxisShort <- taxis[1:500000,c("Pickup_longitude","Pickup_latitude","lpep_pickup_datetime","Lpep_dropoff_datetime")]
+taxisShort <- taxis[,c("Pickup_longitude","Pickup_latitude","lpep_pickup_datetime","Lpep_dropoff_datetime")]
 
+pHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
+pHoursAM <- ifelse(grepl("PM",taxisShort$lpep_pickup_datetime)&pHours<12,pHours+12,pHours)
+pHoursAM[which(grepl("AM",taxisShort$lpep_pickup_datetime)&pHours==12)] <- 0
+taxisShort$pHour <- pHoursAM
 
-## taxisShort <- taxis[1:500000,c("Pickup_longitude","Pickup_latitude","lpep_pickup_datetime","Lpep_dropoff_datetime")]
+dHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
+dHoursAM <- ifelse(grepl("PM",taxisShort$Lpep_dropoff_datetime),dHours+12,dHours)
+taxisShort$dHour <- dHoursAM
 
-## pHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
-## pHoursAM <- ifelse(grepl("PM",taxisShort$lpep_pickup_datetime)&pHours<12,pHours+12,pHours)
-## pHoursAM[which(grepl("AM",taxisShort$lpep_pickup_datetime)&pHours==12)] <- 0
-## taxisShort$pHour <- pHoursAM
-
-## dHours <- unlist(lapply(taxisShort$lpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
-## dHoursAM <- ifelse(grepl("PM",taxisShort$Lpep_dropoff_datetime),dHours+12,dHours)
-## taxisShort$dHour <- dHoursAM
-
-## taxisShort$wday <- weekdays(as.Date(substr(taxisShort$lpep_pickup_datetime,1,10),format="%M/%d/%Y"))
+taxisShort$pickupDate <- as.Date(substr(taxisShort$lpep_pickup_datetime,1,10),format="%m/%d/%Y")
+taxisShort$wday <- weekdays(taxisShort$pickupDate)
