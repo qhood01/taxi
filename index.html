@@ -213,9 +213,6 @@
       }
 
       function heatmap(data) {
-	  // var colorScale = d3.scaleQuantile()
-          //     .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
-          //     .range(colors);
 
 	  var colorScale = d3.scaleSequential(d3.interpolatePuRd)
               .domain([0, d3.max(data, function (d) { return d.value; })]);
