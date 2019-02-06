@@ -2,6 +2,7 @@
 <meta charset="utf-8">
 <html>
   <head>
+    <title>Green Taxi Trips 2016</title>
     <style>
       rect.bordered {
           stroke: #E6E6E6;
@@ -15,6 +16,10 @@
       }
       text.time {
           font-size: 30pt;
+          font-family: Consolas, courier;
+      }
+      text.legend {
+	  font-size: 12pt;
           font-family: Consolas, courier;
       }
       text.axis-workweek {
@@ -82,7 +87,7 @@
 		       "11:00PM"];
 
       var mapColorScale = d3.scaleSequential(d3.interpolateYlGnBu)
-	  .domain([0, 19175]);
+	  .domain([0, (19175/366)]);
       
       function clickHex(d) {
 	  
@@ -299,12 +304,20 @@
 	      .attr("offset", d => d.offset)
 	      .attr("stop-color", d => d.color);
 	  
-	  svg.append('g')
-	      .append("rect")
-	      .attr("transform","translate(40,20)")
+	  var legend = svg.append('g');
+
+	  legend.append("rect")
+	      .attr("transform","translate(40,25)")
 	      .attr("width", legendWidth)
 	      .attr("height", legendHeight)
 	      .style("fill", "url(#linear-gradient)");
+
+	  legend.append("text")
+	      .attr("x",(40+legendWidth)-(legendWidth/2))
+	      .attr("y",15)
+	      .attr("class", "text.legend")
+	      .attr("text-anchor", "middle")
+	      .text("Average Pickups per Hour");
 	  
 	  axisScale = d3.scaleLinear()
 	      .domain(mapColorScale.domain())
@@ -312,7 +325,7 @@
 	  
 	  axisBottom = g => g
 	      .attr("class", `x-axis`)
-	      .attr("transform", 'translate(0,'+(20+legendHeight)+')')
+	      .attr("transform", 'translate(0,'+(25+legendHeight)+')')
 	      .call(d3.axisBottom(axisScale)
 		    .ticks(10)
 		    .tickSize(-legendHeight))
@@ -393,53 +406,53 @@
 	      .on("start", function repeat() {
 		  d3.active(this)
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num0); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num0/366); })
 		      .transition().duration(2000)
-		      .attr("fill", function(d) { return mapColorScale(d.properties.num1); })
+		      .attr("fill", function(d) { return mapColorScale(d.properties.num1/366); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num2); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num2/366); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num3); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num3/366); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num4); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num4/366); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num5); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num5/366); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num6); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num6/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num7); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num7/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num8); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num8/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num9); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num9/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num10); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num10/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num11); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num11/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num12); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num12/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num13); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num13/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num14); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num14/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num15); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num15/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num16); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num16/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num17); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num17/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num18); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num18/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num19); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num19/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num20); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num20/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num21); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num21/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num22); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num22/366); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num23); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num23/366); })
       	      	      .on("start", repeat);
 	      });
       });
