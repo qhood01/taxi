@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <html>
   <head>
-    <title>Green Taxi Trips 2016</title>
+    <title>Yellow Taxi Trips June 2016</title>
     <style>
       rect.bordered {
           stroke: #E6E6E6;
@@ -87,7 +87,7 @@
 		       "11:00PM"];
 
       var mapColorScale = d3.scaleSequential(d3.interpolateYlGnBu)
-	  .domain([0, (19175/366)]);
+	  .domain([0, (23695/30)]);
       
       function clickHex(d) {
 	  
@@ -282,7 +282,7 @@
       }
       
       var taxiData;
-      d3.json("data.json", function(error, d) {
+      d3.json("yellowData.json", function(error, d) {
 	  taxiData = d;
       });
 
@@ -294,7 +294,7 @@
       	  }
       }
       
-      d3.json("hexGrid.GeoJSON", function(error, hex) {
+      d3.json("yellowHexGrid.GeoJSON", function(error, hex) {
 	  var linearGradient = svg.append("linearGradient")
 	      .attr("id", "linear-gradient");
 	  
@@ -406,53 +406,53 @@
 	      .on("start", function repeat() {
 		  d3.active(this)
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num0/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num0/30); })
 		      .transition().duration(2000)
-		      .attr("fill", function(d) { return mapColorScale(d.properties.num1/366); })
+		      .attr("fill", function(d) { return mapColorScale(d.properties.num1/30); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num2/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num2/30); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num3/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num3/30); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num4/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num4/30); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num5/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num5/30); })
       	      	      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num6/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num6/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num7/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num7/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num8/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num8/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num9/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num9/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num10/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num10/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num11/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num11/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num12/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num12/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num13/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num13/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num14/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num14/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num15/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num15/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num16/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num16/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num17/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num17/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num18/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num18/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num19/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num19/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num20/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num20/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num21/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num21/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num22/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num22/30); })
 		      .transition().duration(2000)
-      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num23/366); })
+      	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num23/30); })
       	      	      .on("start", repeat);
 	      });
       });
