@@ -205,7 +205,7 @@
 	      .attr("y", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale; })
 	      .attr("width", tiles.scale)
 	      .attr("height", tiles.scale)
-	      .attr("transform", "translate("+(1200-(width/2))+","+(hexCenterY-(height/2))+")");
+	      .attr("transform", "translate("+(hexCenterX-(width/2))+","+(hexCenterY-(height/2))+")");
 	  
 	  svg.append("use")
 	      .attr("xlink:href", "#frame")
