@@ -86,8 +86,13 @@
 		       "7:00PM", "8:00PM", "9:00PM", "10:00PM",
 		       "11:00PM"];
 
+      // var logScale = d3.scaleLog()
+      // 	  .domain([1, (23695/30)])
+      // 	  .range([0,1]);
+      
       var mapColorScale = d3.scaleSequential(d3.interpolateYlGnBu)
-	  .domain([0, (23695/30)]);
+      	  .domain([0, (23695/30)]);
+//	  .domain([0, 1]);
       
       function clickHex(d) {
 	  
