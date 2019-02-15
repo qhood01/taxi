@@ -8,10 +8,11 @@ library(data.table)
 library(raster)
 library(rgeos)
 
-##taxis <- fread("~/Downloads/2016_Green_Taxi_Trip_Data.csv")
 yellowTaxis <- fread("~/Downloads/yellow_tripdata_2016-06.csv")
+greenTaxis <- fread("~/Downloads/green_tripdata_2016-06.csv")
+names(greenTaxis)[c(6,7,2,3)] <- c("pickup_longitude","pickup_latitude","tpep_pickup_datetime","tpep_dropoff_datetime")
 
-taxisShort <- yellowTaxis[,c("pickup_longitude","pickup_latitude","tpep_pickup_datetime","tpep_dropoff_datetime")]
+taxisShort <- greenTaxis[,c("pickup_longitude","pickup_latitude","tpep_pickup_datetime","tpep_dropoff_datetime")]
 
 pHours <- unlist(lapply(taxisShort$tpep_pickup_datetime,function(x) as.numeric(substr(x,12,13))))
 pHoursAM <- ifelse(grepl("PM",taxisShort$tpep_pickup_datetime)&pHours<12,pHours+12,pHours)
@@ -25,7 +26,6 @@ taxisShort$dHour <- dHoursAM
 
 taxisShort$pickupDate <- as.Date(substr(taxisShort$tpep_pickup_datetime,1,10),format="%Y-%m-%d")
 taxisShort$wday <- weekdays(taxisShort$pickupDate)
-
 
 boros <- readOGR("~/Downloads/nybb_18d/","nybb")
 boros <- boros[boros$BoroName != "Staten Island",]
@@ -89,7 +89,7 @@ for (i in 0:23) {
 hex@data$color <- rep(c('#7fc97f','#beaed4','#fdc086','#ffff99'),2012/4)
 names(hex@data)[2:25] <- paste0("num",0:23)
 #writeOGR(hex, "hexGrid.GeoJSON", layer="hex", driver="GeoJSON",overwrite_layer=TRUE)
-writeOGR(hex, "yellowHexGrid.GeoJSON", layer="hex", driver="GeoJSON",overwrite_layer=TRUE)
+writeOGR(hex, "greenHexGrid.GeoJSON", layer="hex", driver="GeoJSON",overwrite_layer=TRUE)
 
 uniqueDates <- unique(taxisShort[,c("wday","pickupDate")])
 uniqueDates$wday <- factor(uniqueDates$wday,c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
@@ -129,6 +129,4 @@ for (i in hex@data$index) {
 }
 json <- paste0('{"data": [',json,"]}")
 #write(json,"data.json")
-write(json,"yellowData.json")
-
-##taxisShort <- taxis[1:500000,c("Pickup_longitude","Pickup_latitude","lpep_pickup_datetime","Lpep_dropoff_datetime")]
+write(json,"greenData.json")
