@@ -1,0 +1,26 @@
+rect.bordered {
+    stroke: #E6E6E6;
+    stroke-width:2px;   
+}
+
+text.mono {
+    font-size: 9pt;
+    font-family: Consolas, courier;
+    fill: #aaa;
+}
+text.time {
+    font-size: 30pt;
+    font-family: Consolas, courier;
+}
+text.legend {
+    font-size: 12pt;
+    font-family: Consolas, courier;
+}
+text.axis-workweek {
+    fill: #000;
+}
+
+text.axis-worktime {
+    fill: #000;
+}
+.x-axis line, .x-axis path { stroke: #fff; }

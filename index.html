@@ -2,49 +2,45 @@
 <meta charset="utf-8">
 <html>
   <head>
-    <title>Yellow Taxi Trips June 2016</title>
-    <style>
-      rect.bordered {
-          stroke: #E6E6E6;
-          stroke-width:2px;   
-      }
-      
-      text.mono {
-          font-size: 9pt;
-          font-family: Consolas, courier;
-          fill: #aaa;
-      }
-      text.time {
-          font-size: 30pt;
-          font-family: Consolas, courier;
-      }
-      text.legend {
-	  font-size: 12pt;
-          font-family: Consolas, courier;
-      }
-      text.axis-workweek {
-          fill: #000;
-      }
-      
-      text.axis-worktime {
-          fill: #000;
-      }
-      .x-axis line, .x-axis path { stroke: #fff; }
-    </style>
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
+    <title>Taxi Trips June 2016</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://d3js.org/d3.v4.js"></script>
     <script src="https://d3js.org/topojson.v2.min.js"></script>
     <script src="//d3js.org/d3-tile.v0.0.min.js"></script>
     <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
   </head>
   <body>
+    <form>
+      <div class="button"> Pick a Taxi Color </div>
+      <div class="custom-radios">
+	<div>
+	  <input type="radio" id="color-1" name="color" value="yellow" checked>
+	  <label for="color-1">
+	    <span>
+              <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/242518/check-icn.svg" alt="Checked Icon" />
+	    </span>
+	  </label>
+	</div>
+	
+	<div>
+	  <input type="radio" id="color-2" name="color" value="green">
+	  <label for="color-2">
+	    <span>
+              <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/242518/check-icn.svg" alt="Checked Icon" />
+	    </span>
+	  </label>
+	</div>
+      </div>
+    </form>
     <div id="chart"></div>
   <body>
     <script>
       
       var width = 1500;
       var height = 750;
-
+      
+      var currid = null;
+      
       var svg = d3.select("body").append('svg')
 	  .attr('width', width)
 	  .attr('height', height);
@@ -85,17 +81,11 @@
 		       "2:00PM", "3:00PM", "4:00PM", "5:00PM", "6:00PM",
 		       "7:00PM", "8:00PM", "9:00PM", "10:00PM",
 		       "11:00PM"];
-
-      // var logScale = d3.scaleLog()
-      // 	  .domain([1, (23695/30)])
-      // 	  .range([0,1]);
-      
-      var mapColorScale = d3.scaleSequential(d3.interpolateYlGnBu)
-      	  .domain([0, (23695/30)]);
-//	  .domain([0, 1]);
       
       function clickHex(d) {
-	  
+
+	  currid = d.id;
+
 	  var dayLabels = svg.selectAll(".dayLabel")
 	      .data(days)
 	      .enter().append("text")
@@ -158,8 +148,6 @@
 	      tx = (width - k * (p1[0] + p0[0])) / 2,
 	      ty = (height - k * (p1[1] + p0[1])) / 2;
 
-	  console.log(k);
-	  
 	  projectionNew
       	      .scale(k / tau)
       	      .translate([tx, ty]);
@@ -194,8 +182,7 @@
 	  var tiles = d3.tile()
 	      .size([width, height])
 	      .scale(k)
-	      .translate([tx, ty])
-	  ();
+	      .translate([tx, ty])();
 
 	  svg.select(".tile").remove();
 
@@ -279,17 +266,11 @@
 	      .call(d3.axisBottom(heatAxisScale)
 		    .ticks(10)
 		    .tickSize(-legendHeight))
-	  
+
 	  svg.append('g')
 	      .attr("id","heat-axis")
 	      .call(axisBottom);
-	  
       }
-      
-      var taxiData;
-      d3.json("greenData.json", function(error, d) {
-	  taxiData = d;
-      });
 
       function search(index) {
 	  for (var i=0; i < taxiData.data.length;i++) {
@@ -298,10 +279,42 @@
       	      }
       	  }
       }
+
+      var taxiData;
+      var q = d3.queue();
+      q.defer(d3.json, 'yellowHexGrid.GeoJSON');
+      q.defer(d3.json, 'greenHexGrid.GeoJSON');
+      q.defer(d3.json, 'yellowData.json');
+      q.defer(d3.json, 'greenData.json');
+      q.await(function(error,yHex,gHex,yData,gData) {
+	  d3.selectAll("input")
+	      .on("change", change);
+	  
+	  var yMax = 500;
+	  var gMax = 100;
+	  taxiData = yData;
+	  map(yHex,yMax);
+
+	  function change() {
+	      var value = this.value;
+	      hex = value == "yellow" ? yHex : gHex
+	      max = value == "yellow" ? yMax : gMax
+	      taxiData = value == "yellow" ? yData : gData
+	      map(hex,max)
+	      if (currid!=null) {
+		  arr = search(currid)
+		  heatmap(arr)
+	      }
+	  }
+      });
       
-      d3.json("greenHexGrid.GeoJSON", function(error, hex) {
-			    console.log(hex)
-			    var linearGradient = svg.append("linearGradient")
+      function map(hex,max) {
+
+	  var mapColorScale = d3.scaleSequential(d3.interpolateYlGnBu)
+      	      .domain([0, max]);
+
+	  svg.selectAll("#linear-gradient").remove();
+	  var linearGradient = svg.append("linearGradient")
 	      .attr("id", "linear-gradient");
 	  
 	  linearGradient.selectAll("stop")
@@ -309,39 +322,43 @@
 	      .enter().append("stop")
 	      .attr("offset", d => d.offset)
 	      .attr("stop-color", d => d.color);
-	  
-	  var legend = svg.append('g');
+
+	  svg.selectAll(".legend").remove()
+	  var legend = svg.append('g').attr("class", "legend");
 
 	  legend.append("rect")
-	      .attr("transform","translate(40,25)")
+	      .attr("transform","translate(40,40)")
 	      .attr("width", legendWidth)
 	      .attr("height", legendHeight)
 	      .style("fill", "url(#linear-gradient)");
 
 	  legend.append("text")
 	      .attr("x",(40+legendWidth)-(legendWidth/2))
-	      .attr("y",15)
-	      .attr("class", "text.legend")
+	      .attr("y",30)
+	      .attr("class", "legend")
 	      .attr("text-anchor", "middle")
 	      .text("Average Pickups per Hour");
 	  
 	  axisScale = d3.scaleLinear()
 	      .domain(mapColorScale.domain())
 	      .range([40, legendWidth+40])
+
+	  svg.selectAll(".x-axis").remove();
 	  
 	  axisBottom = g => g
 	      .attr("class", `x-axis`)
-	      .attr("transform", 'translate(0,'+(25+legendHeight)+')')
+	      .attr("transform", 'translate(0,'+(40+legendHeight)+')')
 	      .call(d3.axisBottom(axisScale)
 		    .ticks(10)
 		    .tickSize(-legendHeight))
-	  
-	  svg.append('g')
+
+	  var axis = svg.append('g')
 	      .call(axisBottom);
-	  
-	  svg.append("text")
+
+	  svg.selectAll(".time").remove()
+	  var hour = svg.append("text")
 	      .attr("x",(40+legendWidth)-(legendWidth/2))
-	      .attr("y",100)
+	      .attr("y",115)
 	      .attr("text-anchor", "middle")
 	      .attr("class","time")
 	      .text(timesFull[0])
@@ -398,7 +415,8 @@
 		      .text(timesFull[23])
 		      .on("start",repeat);
 	      });
-	  
+
+	  svg.selectAll(".hex").remove()
 	  var hexes = svg.selectAll("path")
     	      .data(hex.features)
     	      .enter().append("path")
@@ -407,7 +425,7 @@
               .attr("d", path)
 	      .attr("stroke","#d9d9d9")
 	      .attr("stroke-width",1)
-	      .attr("fill", function(d) { return "white"; })//col1
+	      .attr("fill", function(d) { return mapColorScale(d.properties.num0/30); })
 	      .transition()
 	      .on("start", function repeat() {
 		  d3.active(this)
@@ -461,7 +479,7 @@
       	      	      .attr("fill", function(d) { return mapColorScale(d.properties.num23/30); })
       	      	      .on("start", repeat);
 	      });
-      });
+      }
 
     </script>
   </body>
